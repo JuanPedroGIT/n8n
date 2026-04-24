@@ -1,12 +1,11 @@
-# Usa la imagen oficial más reciente de n8n
-FROM n8nio/n8n
+FROM n8nio/n8n:latest-debian
 
-# Establece el directorio de trabajo dentro del contenedor
-WORKDIR /home/node/
+# Instalar Python 3 y pip (Debian/Ubuntu usa apt-get)
+USER root
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# El puerto 5678 es el puerto por defecto que usa n8n
-EXPOSE 5678
-
-# El comando por defecto de la imagen ya inicia n8n, 
-# pero puedes especificarlo si lo necesitas para un control exacto
-CMD ["n8n", "start"]
+# Volver al usuario node
+USER node

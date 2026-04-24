@@ -1,6 +1,8 @@
 services:
   n8n:
-    image: n8nio/n8n:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: n8n-app
     restart: always
     environment:
@@ -25,6 +27,7 @@ services:
       - DB_POSTGRESDB_DATABASE=n8n
       - DB_POSTGRESDB_USER=n8n
       - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASS}
+      # Python está disponible en el contenedor (modo internal)
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
