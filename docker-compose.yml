@@ -1,0 +1,47 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-app
+    restart: always
+    environment:
+      - N8N_HOST=n8n.dulziasalamanca.es
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.dulziasalamanca.es/
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      # Desactivar secure cookie (HTTPS manejado por Cloudflare/Nginx)
+      - N8N_SECURE_COOKIE=false
+      # Confianza en el proxy (Nginx)
+      - N8N_TRUST_PROXY=true
+      # Autenticación básica de n8n (Capa 1 de seguridad)
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      # Configuración de Base de Datos (al Postgres de Infra)
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=shared-postgres-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASS}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - shared-network
+    # Ya no hay sección 'ports'
+
+  postgres:
+    image: alpine:latest
+    networks:
+      - shared-network
+    deploy:
+      replicas: 0
+
+networks:
+  shared-network:
+    name: shared-network
+    external: true
+
+volumes:
+  n8n_data:
