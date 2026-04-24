@@ -34,13 +34,6 @@ services:
       - shared-network
     # Ya no hay sección 'ports'
 
-  postgres:
-    image: alpine:latest
-    networks:
-      - shared-network
-    deploy:
-      replicas: 0
-
 networks:
   shared-network:
     name: shared-network
