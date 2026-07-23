@@ -1,0 +1,75 @@
+{
+  "name": "Backup semanal BD cokalba_running",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "cd4b3193-7758-4f7f-be3d-c7a0b139339b",
+      "name": "Cada lunes 2:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [64, 64]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\n\ntry {\n  const result = execSync(\n    'mkdir -p ~/apps/cokalbarunning/backups && docker exec shared-postgres-db pg_dump -U cokalba cokalba_running | gzip > ~/apps/cokalbarunning/backups/backup_cokalbarunning_' +\n    new Date().toISOString().replace(/[:.]/g, '').replace('T', '_').slice(0, 15) +\n    '.sql.gz && echo OK',\n    { encoding: 'utf8', shell: '/bin/sh' }\n  );\n  return [{ json: { success: true, output: result.trim() } }];\n} catch (e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "b0618475-d157-44a8-8e6e-4acaac80fefb",
+      "name": "Ejecutar pg_dump + gzip",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [272, 64]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\n\ntry {\n  const result = execSync(\n    \"find ~/apps/cokalbarunning/backups -name 'backup_cokalbarunning_*.sql.gz' -mtime +7 -delete -print\",\n    { encoding: 'utf8', shell: '/bin/sh' }\n  );\n  const deleted = result.trim();\n  return [{ json: { success: true, deleted: deleted || 'ninguno' } }];\n} catch (e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "fc953b57-4182-480d-8fe8-fa033e5d7939",
+      "name": "Limpiar backups > 7 días",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [464, 64]
+    }
+  ],
+  "connections": {
+    "Cada lunes 2:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar pg_dump + gzip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar pg_dump + gzip": {
+      "main": [
+        [
+          {
+            "node": "Limpiar backups > 7 días",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "backup" },
+    { "name": "infra" }
+  ]
+}

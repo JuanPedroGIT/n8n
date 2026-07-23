@@ -1,0 +1,77 @@
+{
+  "name": "Backup semanal BD cokalba_running",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtHour": 2,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Cada lunes 2:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "command": "mkdir -p ~/apps/cokalbarunning/backups && docker exec shared-postgres-db pg_dump -U cokalba cokalba_running | gzip > ~/apps/cokalbarunning/backups/backup_cokalbarunning_$(date +%Y%m%d_%H%M%S).sql.gz && echo 'OK: backup creado'"
+      },
+      "id": "exec-backup",
+      "name": "Ejecutar pg_dump + gzip",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "command": "find ~/apps/cokalbarunning/backups -name 'backup_cokalbarunning_*.sql.gz' -mtime +7 -delete -print && echo 'OK: limpieza completada'"
+      },
+      "id": "exec-cleanup",
+      "name": "Limpiar backups > 7 días",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Cada lunes 2:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar pg_dump + gzip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar pg_dump + gzip": {
+      "main": [
+        [
+          {
+            "node": "Limpiar backups > 7 días",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "backup" },
+    { "name": "infra" }
+  ]
+}

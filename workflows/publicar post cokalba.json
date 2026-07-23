@@ -1,0 +1,239 @@
+{
+  "name": "publicar post cokalba",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publicar-noticia",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "0b479a55-e58a-4b28-be6c-9cfa657e54fa",
+      "name": "Webhook Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1344,
+        16
+      ],
+      "webhookId": "59ed7203-08bd-487a-90f3-9ad78bd8b851",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ShFhYsguUTPPlJLo",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cokalba-running.com/api/v1/webhook/n8n/update-status-publish",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Callback-Token",
+              "value": "zS6FU4qWy4UkF5d9sNpgiSg5usTZoXtkyCJjYHiA1XRFVOzo"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "= {\n    \"logId\": \"{{ $('Asegurar Datos').item.json.log_id }}\",\n    \"status\": \"published\",\n    \"externalUrl\": \"https://www.instagram.com/cokalbarunning/\"\n  }",
+        "options": {}
+      },
+      "id": "ce02453b-17d4-4a10-b30b-c93433116e52",
+      "name": "Notificar a mi Web",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "1d901915-bfa7-4b50-9499-ea20e0da2015",
+      "name": "Asegurar Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1168,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.buffer.com",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer phkO6r5ZjYig_ryrsUTLS6GiJTAfLCtRAqCMpMU1r87"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation CreateNewPost($input: CreatePostInput!) { createPost(input: $input) { ... on PostActionSuccess { post { id status text } } ... on InvalidInputError { message } ... on UnexpectedError { message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"channelId\": \"6a258bc78f1d11f9b25f9465\",\n      \"mode\": \"addToQueue\",\n      \"schedulingType\": \"automatic\",\n      \"text\": \"{{ $json.titulo }}\\n\\n{{ $json.url_noticia }}\",\n      \"assets\": [\n        {\n          \"image\": {\n            \"url\": \"{{ $json.url_imagen }}\"\n          }\n        }\n      ],\n      \"metadata\": {\n        \"instagram\": {\n          \"type\": \"post\",\n          \"shouldShareToFeed\": true\n        }\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -720,
+        32
+      ],
+      "id": "df4b32f8-d553-4a78-8f2e-0112c63d0603",
+      "name": "publicar en Buffer"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "88d1a5d3-7d2e-4033-8c04-474413c1c5d7",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "\"published\"",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -944,
+        32
+      ],
+      "id": "6b1cc1ab-d5b2-4bde-8770-c5b792052502",
+      "name": "Filter"
+    }
+  ],
+  "pinData": {
+    "Webhook Input": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8n.dulziasalamanca.es",
+            "x-real-ip": "95.18.31.99",
+            "x-forwarded-for": "95.18.31.99, 95.18.31.99",
+            "x-forwarded-proto": "https",
+            "content-length": "916",
+            "user-agent": "Symfony HttpClient (Curl)",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "95.18.31.99",
+            "cf-ipcountry": "ES",
+            "cf-ray": "a16857139f65cff0-MAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-warp-tag-id": "d3f798bf-f998-4b92-b439-f4e7c3507b9c",
+            "content-type": "application/json",
+            "x-autenticacion-cokalba": "zS6FU4qWy4UkF5d9sNpgiSg5usTZoXtkyCJjYHiA1XRFVOzo"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "c83d11dc-7f85-4ee3-84c0-72ce49d5473b",
+            "titulo": "Exito absoluto en la IX Carrera Solidaria Un Nuevo Impulso de Coca de Alba",
+            "texto": "",
+            "url_noticia": "https://cokalba-running.com/blog/exito-absoluto-en-la-ix-carrera-solidaria-un-nuevo-impulso-de-coca-de-alba",
+            "url_imagen": "https://media.cokalba-running.com/un-nuevo-impulso/blog/c65ef5f861d1604d5d226ad3422b3198.jpg",
+            "network": "instagram",
+            "log_id": "4b1590b5-bfbc-436f-b3ac-f27de0af2542",
+            "status": "pending"
+          },
+          "webhookUrl": "https://n8n.dulziasalamanca.es/webhook/publicar-noticia",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Asegurar Datos": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Input": {
+      "main": [
+        [
+          {
+            "node": "Asegurar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "publicar en Buffer": {
+      "main": [
+        [
+          {
+            "node": "Notificar a mi Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "publicar en Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0722b98d-7d32-48b1-a5c7-488df8bd39ca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c80fbbdc6b8555a8e255c7befbebd222559c0b62b606827d352820a2cfea6c5b"
+  },
+  "id": "77R3IMKN5rGUf84l",
+  "tags": []
+}

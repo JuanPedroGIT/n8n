@@ -1,0 +1,220 @@
+{
+  "name": "Contact Email Dispatcher",
+  "nodes": [
+    {
+      "id": "trigger-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-1",
+      "name": "Get Pending Contacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://electricidadmendozadedios.online/api/internal/contacts/pending",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Api-Key",
+              "value": "={{ $env.INTERNAL_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "if-1",
+      "name": "Has Contacts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.data.length }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "split-1",
+      "name": "SplitInBatches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [900, 180],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "email-1",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1120, 180],
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFICATION_FROM_EMAIL }}",
+        "toEmail": "={{ $env.NOTIFICATION_TO_EMAIL }}",
+        "subject": "Nuevo contacto desde web: {{ $json.name }}",
+        "emailFormat": "html",
+        "html": "=<h2>Nuevo contacto desde la web</h2>\n<table style='border-collapse: collapse; width: 100%; max-width: 600px;'>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Nombre:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{{ $json.name }}</td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Teléfono:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{{ $json.phone }}</td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Email:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{{ $json.email || '-' }}</td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Tipo:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{{ $json.type || 'No especificado' }}</td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Área:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{{ $json.area || 'No especificado' }}</td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;' colspan='2'><strong>Mensaje:</strong></td></tr>\n  <tr><td style='padding: 8px; border: 1px solid #ddd;' colspan='2'>{{ $json.message || '-' }}</td></tr>\n</table>\n<p style='margin-top: 20px; color: #666; font-size: 12px;'>Este mensaje fue enviado automáticamente desde el formulario de contacto.</p>",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "smtp-cred",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "id": "http-2",
+      "name": "Mark as Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 180],
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://electricidadmendozadedios.online/api/internal/contacts/{{ $json.id }}/sent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Api-Key",
+              "value": "={{ $env.INTERNAL_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "noop-1",
+      "name": "NoOp",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 420],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Contacts": {
+      "main": [
+        [
+          {
+            "node": "Has Contacts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Contacts?": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NoOp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SplitInBatches": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Mark as Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Sent": {
+      "main": [
+        [
+          {
+            "node": "SplitInBatches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": []
+}
