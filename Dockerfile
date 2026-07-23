@@ -6,5 +6,6 @@ COPY --from=python-stage /usr/local/bin/python3 /usr/local/bin/python3
 COPY --from=python-stage /usr/local/bin/pip3 /usr/local/bin/pip3
 COPY --from=python-stage /usr/local/lib/python3.11 /usr/local/lib/python3.11
 RUN ln -sf /usr/local/bin/python3 /usr/bin/python3 && \
-    apk add --no-cache postgresql-client
+    apt-get update && apt-get install -y --no-install-recommends postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
 USER node
