@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const { execSync } = require('child_process');\n\ntry {\n  const timestamp = new Date().toISOString().replace(/[:.]/g, '').replace('T', '_').slice(0, 15);\n  const file = `/backups/backup_cokalbarunning_${timestamp}.sql.gz`;\n  execSync(\n    `pg_dump -h shared-postgres-db -U cokalba cokalba_running | gzip > ${file}`,\n    { encoding: 'utf8', shell: '/bin/sh', env: { ...process.env, PGPASSWORD: 'secret' } }\n  );\n  return [{ json: { success: true, file } }];\n} catch (e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+        "jsCode": "const { execSync } = require('child_process');\n\ntry {\n  const timestamp = new Date().toISOString().replace(/[:.]/g, '').replace('T', '_').slice(0, 15);\n  const file = `/backups/backup_cokalbarunning_${timestamp}.sql.gz`;\n  execSync(\n    `PGPASSWORD=secret pg_dump -h shared-postgres-db -U cokalba cokalba_running | gzip > ${file}`,\n    { encoding: 'utf8', shell: '/bin/sh' }\n  );\n  return [{ json: { success: true, file } }];\n} catch (e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
       },
       "id": "b0618475-d157-44a8-8e6e-4acaac80fefb",
       "name": "Ejecutar pg_dump + gzip",
